@@ -1,0 +1,38 @@
+name: Taekwondo Notifier
+
+on:
+  schedule:
+    # 매일 08:30 KST = 23:30 UTC (전날)
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+    inputs:
+      send_test_notification:
+        description: 'Telegram 테스트 알림 발송'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Run
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SEND_TEST_NOTIFICATION: ${{ inputs.send_test_notification || 'false' }}
+        run: python taekwondo_notifier.py
+      - name: Commit history
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add history.json
+          git commit -m "Update history.json" || exit 0
+          git push
