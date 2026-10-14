@@ -67,6 +67,28 @@ def wta_items():
     return out
 
 
+def kgta_items():
+    """경기도태권도협회 RSS(공지사항 게시판 /39/): 고단자 또는 6단 심사 안내 글만"""
+    xml = fetch("https://kgta.org/rss")
+    entries = re.findall(r"<item>(.*?)</item>", xml, re.S)
+    print("KGTA RSS 항목", len(entries))
+    out = []
+    for it in entries:
+        tm = re.search(r"<title>(.*?)</title>", it, re.S)
+        lm = re.search(r"<link>(.*?)</link>", it, re.S)
+        if not tm or not lm:
+            continue
+        title = html.unescape(re.sub(r"<!\[CDATA\[|\]\]>", "", tm.group(1))).strip()
+        link = html.unescape(lm.group(1)).strip()
+        m = re.search(r"kgta\.org/39/\?idx=(\d+)", link)
+        if not m:
+            continue
+        if "고단자" not in title and not re.search(r"6\s*단|6\s*-\s*9\s*단", title):
+            continue
+        out.append({"id": "kgta-" + m.group(1), "src": "경기도태권도협회", "title": title, "url": link, "extra": ""})
+    return out
+
+
 def send(msg):
     if not TOKEN or not CHAT_ID:
         print("텔레그램 토큰/챗ID 없음")
@@ -103,7 +125,7 @@ def run():
         return
 
     items, errors = [], []
-    for name, fn in (("KTA", kta_items), ("WTA", wta_items)):
+    for name, fn in (("KTA", kta_items), ("WTA", wta_items), ("KGTA", kgta_items)):
         try:
             got = fn()
             print(name, "후보", len(got))
