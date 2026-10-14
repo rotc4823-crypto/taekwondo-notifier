@@ -6,6 +6,11 @@ on:
     - cron: '30 23 * * *'
   workflow_dispatch:
     inputs:
+      discover_chat:
+        description: 'chat id 확인 (임시)'
+        required: false
+        default: false
+        type: boolean
       send_test_notification:
         description: 'Telegram 테스트 알림 발송'
         required: false
@@ -27,6 +32,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCOVER_CHAT: ${{ inputs.discover_chat || 'false' }}
           SEND_TEST_NOTIFICATION: ${{ inputs.send_test_notification || 'false' }}
         run: python taekwondo_notifier.py
       - name: Commit history
