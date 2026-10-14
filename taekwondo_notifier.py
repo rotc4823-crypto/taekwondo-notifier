@@ -95,7 +95,22 @@ def load_history():
         return []
 
 
+def discover():
+    with urllib.request.urlopen("https://api.telegram.org/bot%s/getUpdates" % TOKEN, timeout=30) as r:
+        res = json.loads(r.read().decode())
+    ids = set()
+    for u in res.get("result", []):
+        m = u.get("message") or u.get("channel_post") or {}
+        c = m.get("chat") or {}
+        if c.get("id") is not None:
+            ids.add((c["id"], c.get("type")))
+    print("CHAT_IDS:", sorted(ids, key=str))
+
+
 def run():
+    if os.environ.get("DISCOVER_CHAT", "false").lower() == "true":
+        discover()
+        return
     if os.environ.get("SEND_TEST_NOTIFICATION", "false").lower() == "true":
         if not send("✅ [태권도 공고] 알리미 점검 완료\n텔레그램 알림 발송이 정상 동작합니다."):
             raise RuntimeError("텔레그램 테스트 알림 발송 실패")
